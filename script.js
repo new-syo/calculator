@@ -91,16 +91,39 @@ const renderItem = (item) => {
 
 // ⚔️ 거점/이벤트 벌금 계산 로직
 window.updatePenalty = () => {
-    const allyCount = parseInt(document.getElementById('p-ally').value) || 0;
-    const enemyCount = parseInt(document.getElementById('p-enemy').value) || 0;
+    const selectedLocation = document.getElementById('p-location').value;
+    const enemyInput = document.getElementById('p-enemy');
+    let allyCount = parseInt(document.getElementById('p-ally').value) || 0;
+    
+    // 카지노, 밀공장, 건샵 게릴라 여부 체크
+    const isEnemyBased = ['카게', '밀게', '건게'].includes(selectedLocation);
+
+    if (!isEnemyBased) {
+        // 그 외 지역: 적군 수가 아군 수와 무조건 동일하게 자동 설정 및 입력 비활성화
+        enemyInput.value = allyCount;
+        enemyInput.disabled = true;
+        enemyInput.style.opacity = '0.6';
+        enemyInput.style.cursor = 'not-allowed';
+    } else {
+        // 3개 게릴라 지역: 적군 인원 수 자유 입력 가능
+        enemyInput.disabled = false;
+        enemyInput.style.opacity = '1';
+        enemyInput.style.cursor = 'text';
+    }
+
+    const enemyCount = parseInt(enemyInput.value) || 0;
     const aRound = parseInt(document.getElementById('p-around').value) || 0;
     const bRound = parseInt(document.getElementById('p-bround').value) || 0;
 
     // 1인당 벌금 3천만원 고정
     const pricePerPerson = 30000000;
 
-    // 입력받은 아군 인원 기준 라운드당 벌금 자동 계산
-    const roundFee = allyCount * pricePerPerson;
+    // 카지노/밀공장/건샵은 적군 인원 기준, 그 외는 동일한 인원 수 기준
+    const targetCount = isEnemyBased ? enemyCount : allyCount;
+    const labelText = isEnemyBased ? '적군' : '동일 인원';
+
+    // 적용 인원 기준 라운드당 벌금 계산
+    const roundFee = targetCount * pricePerPerson;
 
     // 무조건 큰 수에서 작은 수 빼기
     const roundDiff = Math.abs(aRound - bRound);
@@ -109,8 +132,11 @@ window.updatePenalty = () => {
     const totalPenalty = roundDiff * roundFee;
 
     // 실시간 UI 업데이트
-    document.getElementById('p-diff-display').innerText = `${roundDiff}라운드 차이 (${Math.max(aRound, bRound)}라 - ${Math.min(aRound, bRound)}라)`;
-    document.getElementById('p-round-fee-display').innerText = `${formatMoney(roundFee)} (${allyCount}명 기준)`;
+    const minRound = Math.min(aRound, bRound);
+    const maxRound = Math.max(aRound, bRound);
+    
+    document.getElementById('p-diff-display').innerText = `${roundDiff}라운드 차이 (${maxRound}라 - ${minRound}라)`;
+    document.getElementById('p-round-fee-display').innerText = `${formatMoney(roundFee)} (${labelText} ${targetCount}명 기준)`;
     document.getElementById('p-total-display').innerText = `${formatMoney(totalPenalty)} (${formatNumber(totalPenalty)}원)`;
 };
 
@@ -129,14 +155,14 @@ const initApp = () => {
             <div class="penalty-calculator">
                 <div class="form-group">
                     <label>조직RP 선택</label>
-                    <select class="styled-select">
+                    <select id="p-location" class="styled-select" onchange="updatePenalty()">
                         <option value="지상">지상</option>
-                        <option value="남부공항">남부공항  게릴라</option>
+                        <option value="남부공항">남부공항 게릴라</option>
                         <option value="카게">카지노 게릴라</option>
-                        <option value="밀게">밀공장  게릴라</option>
-                        <option value="건게">건샵  게릴라</option>
+                        <option value="밀게">밀공장 게릴라</option>
+                        <option value="건게">건샵 게릴라</option>
                         <option value="말농">말농장 게릴라</option>
-                        <option value="호수위">호수 위  게릴라</option>
+                        <option value="호수위">호수 위 게릴라</option>
                     </select>
                 </div>
 
@@ -166,15 +192,15 @@ const initApp = () => {
                 <div class="penalty-result-box">
                     <div class="result-row">
                         <span style="color: var(--text-muted);">승리 라운드 차이:</span>
-                        <span id="p-diff-display" style="font-weight: 600;">14라운드 차이 (16라 - 2라)</span>
+                        <span id="p-diff-display" style="font-weight: 600;">0라운드 차이 (0라 - 0라)</span>
                     </div>
                     <div class="result-row">
                         <span style="color: var(--text-muted);">1라운드당 적용 벌금:</span>
-                        <span id="p-round-fee-display" style="font-weight: 600; color: #60a5fa;">2억 1,000만원 (7명 기준)</span>
+                        <span id="p-round-fee-display" style="font-weight: 600; color: #60a5fa;">0원 (0명 기준)</span>
                     </div>
                     <div class="result-row main">
                         <span style="font-weight: 700; font-size: 1.1rem; color: var(--warning);">최종 총 벌금:</span>
-                        <span id="p-total-display" style="font-weight: 800; font-size: 1.3rem; color: var(--warning);">29억 4,000만원 (2,940,000,000원)</span>
+                        <span id="p-total-display" style="font-weight: 800; font-size: 1.3rem; color: var(--warning);">0원 (0원)</span>
                     </div>
                 </div>
             </div>
