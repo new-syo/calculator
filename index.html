@@ -2,17 +2,16 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <link rel="icon" href="favicon.png" type="image/x-icon">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>조직 계산기</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
+    <div class="orb orb-1" aria-hidden="true"></div>
+    <div class="orb orb-2" aria-hidden="true"></div>
+    <div class="orb orb-3" aria-hidden="true"></div>
     
     <h1>조직 물품 계산기</h1>
     <div class="container" id="app"></div>
@@ -24,12 +23,12 @@
                 <span class="total-value" id="grand-total">0원</span>
             </div>
             <div class="total-row">
-                <span class="total-label" style="font-size:0.95rem;">필요한 검은돈 (15% 환전 기준)</span>
+                <span class="total-label sm">필요한 검은돈 (15% 환전 기준)</span>
                 <span class="total-value black-money" id="required-black-money">0원</span>
             </div>
         </div>
     </div>
     
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
