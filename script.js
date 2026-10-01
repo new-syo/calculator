@@ -50,12 +50,12 @@
         { id: 'pistol', name: '피스톨', price: 50_000_000, category: 'weapon' },
         { id: 'melee', name: '근접무기', price: 10_000_000, category: 'weapon' },
         { id: 'ammo', name: '총알', price: 5_000_000, category: 'weapon', unit: { per: 100, label: '발' } },
-        { id: 'bag_s_5', name: '가방(600) 5일', price: 1_500_000_000, category: 'extra' },
-        { id: 'bag_s_10', name: '가방(600) 10일', price: 3_000_000_000, category: 'extra' },
-        { id: 'bag_l_5', name: '가방(1200) 5일', price: 2_500_000_000, category: 'extra' },
-        { id: 'bag_l_10', name: '가방(1200) 10일', price: 5_000_000_000, category: 'extra' },
-        { id: 'storage_s', name: '소형창고(150)', price: 1_500_000_000, category: 'extra' },
-        { id: 'storage_l', name: '대형창고(300)', price: 3_000_000_000, category: 'extra' }
+        { id: 'bag_s_5', name: '소형가방(5일)+300kg', price: 1_500_000_000, category: 'extra' },
+        { id: 'bag_s_10', name: '소형가방(10일)+300kg', price: 3_000_000_000, category: 'extra' },
+        { id: 'bag_l_5', name: '대형가방(5일)+600kg', price: 2_500_000_000, category: 'extra' },
+        { id: 'bag_l_10', name: '대형가방(10일)+600kg', price: 5_000_000_000, category: 'extra' },
+        { id: 'storage_s', name: '소형창고(75kg)', price: 1_500_000_000, category: 'extra' },
+        { id: 'storage_l', name: '대형창고(150kg)', price: 3_000_000_000, category: 'extra' }
     ];
 
     const byId = Object.fromEntries(items.map(i => [i.id, i]));
@@ -85,7 +85,7 @@
             <div class="card card-weapon"><h2>🔫 무기 및 총알</h2>${list('weapon')}</div>
             <div class="card card-calc">
                 <h2>💰 검은돈 환전 수수료 계산기</h2>
-                <p class="muted" style="font-size:0.95rem;">보유한 검은돈을 입력하면 15% 수수료를 제외한 실수령액을 알려줍니다.</p>
+                <p class="muted" style="font-size:0.95rem;">검은돈 입력 시 차감, 수령액</p>
                 <div class="black-money-calculator">
                     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                         <label for="bm-input" style="font-size:0.95rem; font-weight:500;">보유한 검은돈 금액 입력</label>
