@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>조직 물품 계산기</title>
     <link rel="stylesheet" href="style.css">
+    <!-- 유틸리티 스크립트 (formatMoney, formatNumber, copyText, toast 등이 정의된 파일) -->
+    <script src="util.js"></script> 
 </head>
 <body>
     <div class="orb orb-1"></div>
@@ -16,31 +18,33 @@
         <a href="ledger.html" class="nav-btn">📖 조직 장부 작성</a>
     </div>
 
-    <div class="container">
-        <!-- 물품 선택 및 수량 입력 카드가 들어가는 영역 -->
+    <main class="container with-total">
+        <!-- JS에서 카드가 동적으로 생성될 영역 (ID: items-container) -->
         <div id="items-container" class="grid-container"></div>
 
-        <!-- 최종 정산 결과 카드 -->
-        <div class="card full-width">
+        <!-- 하단 최종 정산 금액 카드 -->
+        <div class="card" style="margin-top: 1rem;">
             <h2>💰 최종 정산 금액</h2>
             
-            <div id="summary-list" class="summary-list">
+            <div id="summary-list" style="margin-bottom: 1rem;">
                 <p style="color: var(--text-muted); text-align: center;">선택된 물품이 없습니다.</p>
             </div>
 
-            <div class="total-box">
-                <span>총합계:</span>
-                <span id="grand-total">0원</span>
-            </div>
+            <div style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 1rem; margin-top: 1rem;">
+                <div class="total-row" style="margin-bottom: 1rem;">
+                    <span class="total-label">총합계:</span>
+                    <span id="grand-total" class="total-value">0원 (0)</span>
+                </div>
 
-            <div class="copy-box">
-                <textarea id="copy-text" readonly rows="4" class="styled-textarea" placeholder="선택한 물품 내역이 이곳에 표시됩니다."></textarea>
-                <button class="copy-btn" onclick="copyResult()">📋 내역 복사하기</button>
+                <div class="copy-box">
+                    <textarea id="copy-text" class="styled-textarea" rows="4" readonly placeholder="선택한 물품 내역이 이곳에 표시됩니다."></textarea>
+                    <button type="button" class="copy-btn" onclick="copyResult()">📋 내역 복사하기</button>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <script src="common.js"></script>
+    <!-- 스크립트 연결 (반드시 body 맨 아래에 위치) -->
     <script src="script.js"></script>
 </body>
 </html>
