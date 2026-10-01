@@ -1,9 +1,42 @@
 (() => {
     'use strict';
-    const { formatMoney, formatNumber } = window.Util;
+
+    // ---- [1] Util 객체 자체 정의 (util.js가 없어도 작동하도록 포함) ----
+    const Util = window.Util || {
+        formatMoney(amount) {
+            if (isNaN(amount)) return '0원';
+            return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+        },
+        formatNumber(num) {
+            if (isNaN(num)) return '0';
+            return new Intl.NumberFormat('ko-KR').format(num);
+        },
+        async copyText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        },
+        toast(message) {
+            let toastEl = document.getElementById('global-toast');
+            if (!toastEl) {
+                toastEl = document.createElement('div');
+                toastEl.id = 'global-toast';
+                toastEl.className = 'toast';
+                document.body.appendChild(toastEl);
+            }
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 2500);
+        }
+    };
+
+    const { formatMoney, formatNumber, toast, copyText } = Util;
 
     const MAX_QTY = 999;        // 품목당 최대 수량
-    const MAX_BM_DIGITS = 13;   // 검은돈 입력 최대 자릿수 (정밀도 보호)
+    const MAX_BM_DIGITS = 13;   // 검은돈 입력 최대 자릿수
 
     const items = [
         { id: 'raw', name: '마약 원재료 (세트)', price: 100_000_000, category: 'drug', unit: { per: 100, label: '개' } },
@@ -28,7 +61,6 @@
     const byId = Object.fromEntries(items.map(i => [i.id, i]));
     const qty = Object.fromEntries(items.map(i => [i.id, 0]));
     const $ = (id) => document.getElementById(id);
-    const app = $('items-container');
 
     const renderItem = (item) => `
         <div class="item-row">
@@ -44,6 +76,9 @@
         </div>`;
 
     const render = () => {
+        const app = $('items-container');
+        if (!app) return;
+
         const list = (cat) => items.filter(i => i.category === cat).map(renderItem).join('');
         app.innerHTML = `
             <div class="card card-drug"><h2>💊 마약 및 폭발물</h2>${list('drug')}</div>
@@ -77,18 +112,20 @@
             </details>`;
     };
 
-    // ---- 물품 합계 ----
     const updateTotals = () => {
+        const grandTotalEl = $('grand-total');
+        if (!grandTotalEl) return;
+
         const total = items.reduce((sum, i) => sum + i.price * qty[i.id], 0);
-        $('grand-total').textContent = `${formatMoney(total)} (${formatNumber(total)})`;
+        grandTotalEl.textContent = `${formatMoney(total)} (${formatNumber(total)})`;
 
         const selectedItems = items.filter(i => qty[i.id] > 0);
         const summaryList = $('summary-list');
         const copyTextarea = $('copy-text');
 
         if (selectedItems.length === 0) {
-            summaryList.innerHTML = '<p style="color: var(--text-muted); text-align: center;">선택된 물품이 없습니다.</p>';
-            copyTextarea.value = '';
+            if (summaryList) summaryList.innerHTML = '<p style="color: var(--text-muted); text-align: center;">선택된 물품이 없습니다.</p>';
+            if (copyTextarea) copyTextarea.value = '';
         } else {
             let summaryHTML = '';
             let copyString = '[ 물품 구매 내역 ]\n';
@@ -107,21 +144,27 @@
             });
 
             copyString += `\n총합계: ${formatMoney(total)}`;
-            summaryList.innerHTML = summaryHTML;
-            copyTextarea.value = copyString;
+            if (summaryList) summaryList.innerHTML = summaryHTML;
+            if (copyTextarea) copyTextarea.value = copyString;
         }
     };
 
     const setQty = (id, value, syncInput = true) => {
         const v = Math.min(MAX_QTY, Math.max(0, parseInt(value, 10) || 0));
         qty[id] = v;
-        if (syncInput) app.querySelector(`input[data-id="${id}"]`).value = v;
+        const app = $('items-container');
+        if (app && syncInput) {
+            const input = app.querySelector(`input[data-id="${id}"]`);
+            if (input) input.value = v;
+        }
         const unit = byId[id].unit;
-        if (unit) app.querySelector(`[data-count="${id}"]`).textContent = `(${formatNumber(v * unit.per)}${unit.label})`;
+        if (app && unit) {
+            const countEl = app.querySelector(`[data-count="${id}"]`);
+            if (countEl) countEl.textContent = `(${formatNumber(v * unit.per)}${unit.label})`;
+        }
         updateTotals();
     };
 
-    // ---- 검은돈 환전 ----
     const onBlackMoneyInput = (input) => {
         const caret = input.selectionStart ?? input.value.length;
         const digitsBeforeCaret = input.value.slice(0, caret).replace(/\D/g, '').length;
@@ -138,45 +181,51 @@
 
         const receive = Math.floor(amount * 85 / 100);
         const fee = amount - receive;
-        $('bm-input-korean').textContent = `(${formatMoney(amount)})`;
-        $('bm-fee').textContent = `${formatMoney(fee)} (${formatNumber(fee)})`;
-        $('bm-receive').textContent = `${formatMoney(receive)} (${formatNumber(receive)})`;
-        $('bm-receive-raw').textContent = String(receive);
+        if ($('bm-input-korean'))$('bm-input-korean').textContent = `(${formatMoney(amount)})`;
+        if ($('bm-fee'))$('bm-fee').textContent = `${formatMoney(fee)} (${formatNumber(fee)})`;
+        if ($('bm-receive'))$('bm-receive').textContent = `${formatMoney(receive)} (${formatNumber(receive)})`;
+        if ($('bm-receive-raw'))$('bm-receive-raw').textContent = String(receive);
     };
 
-    // ---- 이벤트 위임 ----
-    app.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
-        const id = btn.dataset.id;
-        setQty(id, qty[id] + (btn.dataset.action === 'inc' ? 1 : -1));
+    // ---- 이벤트 등록 ----
+    document.addEventListener('DOMContentLoaded', () => {
+        render();
+        updateTotals();
+
+        const app = $('items-container');
+        if (!app) return;
+
+        app.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            setQty(id, qty[id] + (btn.dataset.action === 'inc' ? 1 : -1));
+        });
+
+        app.addEventListener('input', (e) => {
+            const t = e.target;
+            if (t.id === 'bm-input') return onBlackMoneyInput(t);
+            if (t.dataset.id) setQty(t.dataset.id, t.value, false);
+        });
+
+        app.addEventListener('change', (e) => {
+            if (e.target.dataset.id) e.target.value = qty[e.target.dataset.id];
+        });
     });
 
-    app.addEventListener('input', (e) => {
-        const t = e.target;
-        if (t.id === 'bm-input') return onBlackMoneyInput(t);
-        if (t.dataset.id) setQty(t.dataset.id, t.value, false);
-    });
-
-    app.addEventListener('change', (e) => {
-        if (e.target.dataset.id) e.target.value = qty[e.target.dataset.id];
-    });
-
-    // ---- 내역 복사 함수 ----
+    // 복사 기능 전역 바인딩
     window.copyResult = async () => {
-        const text = $('copy-text').value;
+        const copyTextarea = $('copy-text');
+        const text = copyTextarea ? copyTextarea.value : '';
         if (!text) {
-            window.Util.toast('복사할 내역이 없습니다.');
+            toast('복사할 내역이 없습니다.');
             return;
         }
-        const success = await window.Util.copyText(text);
+        const success = await copyText(text);
         if (success) {
-            window.Util.toast('내역이 클립보드에 복사되었습니다!');
+            toast('내역이 클립보드에 복사되었습니다!');
         } else {
-            window.Util.toast('복사에 실패했습니다.');
+            toast('복사에 실패했습니다.');
         }
     };
-
-    render();
-    updateTotals();
 })();
