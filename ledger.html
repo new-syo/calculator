@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>조직 장부 작성</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <header class="header-container">
+        <h1>📖 조직 장부 작성</h1>
+        <a href="index.html" class="nav-btn">🧮 물품 계산기</a>
+    </header>
+
+    <main class="container">
+        <!-- 일반 RP 장부 -->
+        <section class="card full-width">
+            <h2>⚔️ 일반 RP 장부 작성</h2>
+            <div class="penalty-calculator">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="rp-target-select">상대 조직명</label>
+                        <select id="rp-target-select" class="styled-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rp-type">RP 종류</label>
+                        <select id="rp-type" class="styled-select">
+                            <option value="지디">지디 (동수)</option>
+                            <option value="지씨">지씨 (동수)</option>
+                            <option value="남부공항">남부공항 게릴라 (동수)</option>
+                            <option value="카게" selected>카지노 게릴라 (적군 기준)</option>
+                            <option value="밀게">밀공장 게릴라 (적군 기준)</option>
+                            <option value="건게">건샵 게릴라 (적군 기준)</option>
+                            <option value="말농">말농장 게릴라 (동수)</option>
+                            <option value="호수위">호수 위 게릴라 (동수)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="rp-ally">신수 참여 인원 (명)</label>
+                        <input type="number" id="rp-ally" class="styled-input" value="7" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="rp-enemy">상대 참여 인원 (명)</label>
+                        <input type="number" id="rp-enemy" class="styled-input" value="5" min="0">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="rp-around">A팀 승리 라운드</label>
+                        <input type="number" id="rp-around" class="styled-input" value="2" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="rp-bround">B팀 승리 라운드</label>
+                        <input type="number" id="rp-bround" class="styled-input" value="16" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>최종 스코어 및 승패여부 스크린샷</label>
+                    <label class="image-upload-box" id="image-drop-zone" for="rp-screenshot-input">
+                        클릭하여 이미지 선택 Ctrl + V (복사붙여넣기)
+                    </label>
+                    <input type="file" id="rp-screenshot-input" accept="image/*" multiple hidden>
+                    <div id="preview-container" class="preview-container"></div>
+                </div>
+
+                <div class="penalty-result-box">
+                    <div class="result-row">
+                        <span class="muted">표기용 RP 종류:</span>
+                        <span id="rp-code-display" class="v-blue"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="muted">라운드 차이:</span>
+                        <span id="rp-round-diff-display" class="v-purple"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="muted">1라운드당 벌금 (인당 3천만):</span>
+                        <span id="rp-round-fee-display" class="v-blue"></span>
+                    </div>
+                    <div class="result-row main">
+                        <span class="v-warn" style="font-size:1.1rem;">최종 계산 금액:</span>
+                        <span id="rp-total-display" class="v-warn" style="font-size:1.3rem;"></span>
+                    </div>
+                </div>
+
+                <div class="copy-box">
+                    <textarea id="rp-copy-text" readonly rows="6" class="styled-textarea" aria-label="일반 RP 장부 미리보기"></textarea>
+                    <div class="copy-row">
+                        <button type="button" id="btn-copy-rp-text" class="copy-btn">① 장부 텍스트 복사</button>
+                        <button type="button" id="btn-copy-rp-image" class="copy-btn green">② 스크린샷 복사</button>
+                    </div>
+                    <div class="hint">①을 누르고 붙여넣기 → ②를 누르고 다시 붙여넣기</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 건샵털이 장부 -->
+        <section class="card full-width">
+            <h2>🛒 건샵털이 장부 작성</h2>
+            <div class="penalty-calculator">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="gun-citizen">시민측 참여인원 (고번/이름)</label>
+                        <input type="text" id="gun-citizen" class="styled-input" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="gun-enemy">상대측(신수) 참여인원 (고번/이름)</label>
+                        <input type="text" id="gun-enemy" class="styled-input" value="">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="round-head">
+                        <label>신수측 라운드 승/패 기록 (최대 3라운드)</label>
+                        <span id="gun-round-status" class="v-blue" style="font-size:0.95rem;"></span>
+                    </div>
+                    <div class="gun-actions">
+                        <button type="button" id="btn-add-win" class="copy-btn win" style="flex:1;">👍 신수 승 (+)</button>
+                        <button type="button" id="btn-add-lose" class="copy-btn lose" style="flex:1;">👎 신수 패 (+)</button>
+                        <button type="button" id="btn-remove-round" class="copy-btn gray" title="마지막 입력 취소">⬅️ 지우기</button>
+                        <button type="button" id="btn-reset-round" class="copy-btn dark" title="전체 초기화">🔄 리셋</button>
+                    </div>
+                </div>
+
+                <div class="form-group" id="weapon-select-group" hidden>
+                    <label>신수 패배 보상 총기 선택 (라운드별)</label>
+                    <div class="weapon-inline-group" id="weapon-dropdowns"></div>
+                </div>
+
+                <div class="penalty-result-box">
+                    <div class="result-row">
+                        <span class="muted">최종 벌금 (신수 승리 라운드 당 5천만):</span>
+                        <span id="gun-fine-display" style="font-weight:700; color:var(--danger);">0원</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="muted">최종 총기 보상:</span>
+                        <span id="gun-reward-display" style="font-weight:700; color:var(--success);">X</span>
+                    </div>
+                </div>
+
+                <div class="copy-box">
+                    <textarea id="gun-copy-text" readonly rows="5" class="styled-textarea" aria-label="건샵털이 장부 미리보기"></textarea>
+                    <button type="button" id="btn-copy-gun" class="copy-btn">📋 건샵털이 장부 복사하기</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="common.js"></script>
+    <script src="ledger.js"></script>
+</body>
+</html>
