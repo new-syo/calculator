@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     'use strict';
 
     // ---- [1] common.js 의 window.Util 사용, 없을 경우 폴백 ----
@@ -84,7 +84,7 @@
         const list = (cat) => items.filter(i => i.category === cat).map(renderItem).join('');
         app.innerHTML = `
             <div class="card card-drug"><h2>💊 마약 및 폭발물</h2>${list('drug')}</div>
-            <div class="card card-weapon"><h2>🔫 무기 및 총알</h2>${list('weapon')}</div>
+            <div class="card card-weapon"><div class="card-weapon-header"><h2>🔫 무기 및 총알</h2><button type="button" id="btn-copy-weapon" class="copy-btn-sm">📋 내역 복사</button></div>${list('weapon')}</div>
             <div class="card card-calc">
                 <h2>💰 검은돈 환전 수수료 계산기</h2>
                 <p class="muted" style="font-size:0.95rem; margin-bottom:0.5rem;">검은돈 입력 시 수수료(15%) 차감 후 수령액을 계산합니다.</p>
@@ -244,6 +244,14 @@
 
         // 복사 버튼
         $('btn-copy-result')?.addEventListener('click', async () => {
+            const text = $('copy-text')?.value ?? '';
+            if (!text) { toast('복사할 내역이 없습니다.'); return; }
+            toast((await copyText(text)) ? '내역이 클립보드에 복사되었습니다!' : '복사에 실패했습니다.');
+        });
+
+        // 무기 카드 내역 복사 버튼
+        document.addEventListener('click', async (e) => {
+            if (!e.target.closest('#btn-copy-weapon')) return;
             const text = $('copy-text')?.value ?? '';
             if (!text) { toast('복사할 내역이 없습니다.'); return; }
             toast((await copyText(text)) ? '내역이 클립보드에 복사되었습니다!' : '복사에 실패했습니다.');
