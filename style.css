@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --bg-color: #0f172a;
     --glass-bg: rgba(30, 41, 59, 0.6);
     --glass-border: rgba(255, 255, 255, 0.08);
@@ -493,6 +493,55 @@ details[open] > summary::after { transform: rotate(90deg); }
     font-size: 0.95rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ===== 장부 아코디언 ===== */
+/* generic summary CSS(padding/font/flex 등)를 그대로 상속, 추가분만 작성 */
+.ledger-accordion { padding: 0; overflow: hidden; }
+.ledger-summary:hover { background: rgba(255, 255, 255, 0.04); }
+.ledger-accordion-body {
+    padding: 1.5rem 1.75rem 1.75rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+/* 무기카드 복사버튼 */
+/* .card h2의 margin/border/padding을 wrapper가 대신 담당, h2 자체에서는 제거 */
+.card-weapon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 1rem;
+}
+
+.card.card-weapon .card-weapon-header h2 {
+    margin-bottom: 0 !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+}
+
+.copy-btn-sm {
+    background: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.copy-btn-sm:hover {
+    background: rgba(59, 130, 246, 0.35);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.copy-btn-sm:active { transform: translateY(0); }
 
 /* ===== 유틸 ===== */
 [hidden] { display: none !important; }
