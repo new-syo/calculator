@@ -36,6 +36,9 @@
     const MAX_QTY = 999;        // 품목당 최대 수량
     const MAX_BM_DIGITS = 13;   // 검은돈 입력 최대 자릿수
 
+    let bmInputAmount = 0;      // 입력한 검은돈 원금
+    let bmReceiveAmount = 0;    // 검은돈 실수령액(85%)
+
     const items = [
         { id: 'raw', name: '마약 원재료 (세트)', price: 100_000_000, category: 'drug', unit: { per: 100 / 1, label: '개' } },
         { id: 'finished', name: '마약 완제품 (세트)', price: 200_000_000, category: 'drug', unit: { per: 100, label: '개' } },
@@ -87,10 +90,10 @@
             <div class="card card-weapon"><div class="card-weapon-header"><h2>🔫 무기 및 총알</h2><button type="button" id="btn-copy-weapon" class="copy-btn-sm">📋 내역 복사</button></div>${list('weapon')}</div>
             <div class="card card-calc">
                 <h2>💰 검은돈 환전 수수료 계산기</h2>
-                <p class="muted" style="font-size:0.95rem; margin-bottom:0.5rem;">검은돈 입력 시 수수료(15%) 차감 후 수령액을 계산합니다.</p>
+                <p class="muted" style="font-size:0.95rem; margin-bottom:0.5rem;">검은돈 입력 시 15% 차감 후 계산</p>
                 <div class="black-money-calculator">
                     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                        <label for="bm-input" style="font-size:0.95rem; font-weight:500;">보유한 검은돈 금액 입력</label>
+                        <label for="bm-input" style="font-size:0.95rem; font-weight:500;">검은돈 금액 입력</label>
                         <span id="bm-input-korean" style="color:var(--accent); font-size:0.9rem; font-weight:600;">(0원)</span>
                     </div>
                     <input type="text" id="bm-input" inputmode="numeric" autocomplete="off"
@@ -124,38 +127,51 @@
         grandTotalEl.textContent = formatMoney(total);
 
         const selectedItems = items.filter(i => qty[i.id] > 0);
+        const hasBlackMoney = bmInputAmount > 0;   // 1원이라도 입력했는지
         const summaryList = $('summary-list');
         const copyTextarea = $('copy-text');
 
-        if (selectedItems.length === 0) {
+        // 물품도 없고 검은돈도 없으면 비움
+        if (selectedItems.length === 0 && !hasBlackMoney) {
             if (summaryList) summaryList.innerHTML = '<p class="empty-msg">선택된 물품이 없습니다.</p>';
             if (copyTextarea) copyTextarea.value = '';
             return;
         }
 
         let summaryHTML = '';
-        let copyString = '[ 물품 구매 내역 ]\n';
+        let copyString = '';
 
-        selectedItems.forEach(i => {
-            const c = qty[i.id];
-            const unitStr = i.unit ? ` (${formatNumber(c * i.unit.per)}${i.unit.label})` : '';
-            const subtotal = c * i.price;
+        if (selectedItems.length > 0) {
+            copyString += '[ 물품 구매 내역 ]\n';
+            selectedItems.forEach(i => {
+                const c = qty[i.id];
+                const unitStr = i.unit ? ` (${formatNumber(c * i.unit.per)}${i.unit.label})` : '';
+                const subtotal = c * i.price;
 
-            summaryHTML += `<div class="summary-row">
-                <span>${i.name} x ${c}${unitStr}</span>
-                <span class="summary-price">${formatMoney(subtotal)}</span>
-            </div>`;
+                summaryHTML += `<div class="summary-row">
+                    <span>${i.name} x ${c}${unitStr}</span>
+                    <span class="summary-price">${formatMoney(subtotal)}</span>
+                </div>`;
 
-            copyString += `- ${i.name} x ${c}${unitStr} : ${formatMoney(subtotal)}\n`;
-        });
+                copyString += `- ${i.name} x ${c}${unitStr} : ${formatMoney(subtotal)}\n`;
+            });
+            copyString += `\n총합계: ${formatMoney(total)}`;
+        } else {
+            summaryHTML = '<p class="empty-msg">선택된 물품이 없습니다.</p>';
+        }
 
-        copyString += `\n총합계: ${formatMoney(total)}`;
+        // 검은돈을 1원이라도 입력했을 때만 정산 내역 추가
+        if (hasBlackMoney) {
+            const diff = Math.abs(bmReceiveAmount - total);   // 큰 수 - 작은 수
+            const isRemain = bmReceiveAmount >= total;
 
-        // 검은돈 1원이라도 입력된 경우에만 추가
-        const bmReceive = parseInt($('bm-receive-raw')?.textContent || '0', 10) || 0;
-        if (bmReceive > 0) {
-            copyString += `\n검은돈 실수령액 (85%): ${formatMoney(bmReceive)}`;
-            copyString += `\n검은돈 85% - 총합계: ${formatMoney(total - bmReceive)}`;
+            copyString += `${copyString ? '\n\n' : ''}[ 검은돈 정산 ]`;
+            copyString += `\n검은돈 입력 금액: ${formatMoney(bmInputAmount)}`;
+            copyString += `\n환전 후 금액 (85%): ${formatMoney(bmReceiveAmount)}`;
+            copyString += `\n물품 총합계: -${formatMoney(total)}`;
+            copyString += isRemain
+                ? `\n남은 검은돈 실수령액: ${formatMoney(diff)}`
+                : `\n부족한 금액: ${formatMoney(diff)}`;
         }
 
         if (summaryList) summaryList.innerHTML = summaryHTML;
@@ -205,6 +221,10 @@
 
         const receive = Math.floor(amount * 85 / 100);
         const fee = amount - receive;
+
+        bmInputAmount = amount;
+        bmReceiveAmount = receive;
+
         if ($('bm-input-korean')) $('bm-input-korean').textContent = `(${formatMoney(amount)})`;
         if ($('bm-fee')) $('bm-fee').textContent = `${formatMoney(fee)} (${formatNumber(fee)})`;
         if ($('bm-receive')) $('bm-receive').textContent = `${formatMoney(receive)} (${formatNumber(receive)})`;
