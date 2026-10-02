@@ -37,7 +37,7 @@
     const MAX_BM_DIGITS = 13;   // 검은돈 입력 최대 자릿수
 
     const items = [
-        { id: 'raw', name: '마약 원재료 (세트)', price: 100_000_000, category: 'drug', unit: { per: 100, label: '개' } },
+        { id: 'raw', name: '마약 원재료 (세트)', price: 100_000_000, category: 'drug', unit: { per: 100 / 1, label: '개' } },
         { id: 'finished', name: '마약 완제품 (세트)', price: 200_000_000, category: 'drug', unit: { per: 100, label: '개' } },
         { id: 'c4', name: 'C4', price: 40_000_000, category: 'drug' },
         { id: 'mini_smg', name: '미니 SMG', price: 130_000_000, category: 'weapon' },
@@ -150,6 +150,14 @@
         });
 
         copyString += `\n총합계: ${formatMoney(total)}`;
+
+        // 검은돈 1원이라도 입력된 경우에만 추가
+        const bmReceive = parseInt($('bm-receive-raw')?.textContent || '0', 10) || 0;
+        if (bmReceive > 0) {
+            copyString += `\n검은돈 실수령액 (85%): ${formatMoney(bmReceive)}`;
+            copyString += `\n검은돈 85% - 총합계: ${formatMoney(total - bmReceive)}`;
+        }
+
         if (summaryList) summaryList.innerHTML = summaryHTML;
         if (copyTextarea) copyTextarea.value = copyString;
     };
@@ -201,6 +209,7 @@
         if ($('bm-fee')) $('bm-fee').textContent = `${formatMoney(fee)} (${formatNumber(fee)})`;
         if ($('bm-receive')) $('bm-receive').textContent = `${formatMoney(receive)} (${formatNumber(receive)})`;
         if ($('bm-receive-raw')) $('bm-receive-raw').textContent = String(receive);
+        updateTotals();
     };
 
     // ---- 이벤트 등록 ----
