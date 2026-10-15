@@ -20,8 +20,15 @@
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
 
-    <header class="header-container">
-        <h1>🧮 조직 물품 계산기</h1>
+    <header class="header-container has-total">
+        <div class="header-title">
+            <h1>🧮 조직 물품 계산기</h1>
+            <div class="header-total" role="status" aria-live="polite">
+                <span class="header-total-label">총합계</span>
+                <span id="header-total" class="header-total-value">0원</span>
+            </div>
+            <div id="header-settle" class="header-total header-settle" role="status" aria-live="polite" hidden></div>
+        </div>
         <a href="ledger.html" class="nav-btn">📖 조직 장부 작성</a>
     </header>
 
