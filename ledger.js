@@ -168,7 +168,7 @@
         $('gun-reward-display').textContent = reward;
         $('gun-copy-text').value =
             `시민측 참여인원(고번/이름): ${$('gun-citizen').value}\n` +
-            `신수측 참여인원(고번/이름): ${$('gun-enemy').value}\n` +
+            `백사회측 참여인원(고번/이름): ${$('gun-enemy').value}\n` +
             `라운드 승/패 여부(큰스): ${roundsStr || '미입력'}\n` +
             `벌금: ${formatMoney(fine)}\n` +
             `보상: ${reward}`;
