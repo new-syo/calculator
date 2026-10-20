@@ -14,7 +14,13 @@
     const MAX_IMAGES = 10;
     // =========================================================
 
-    const $ = (id) => document.getElementById(id);
+    const domCache = new Map();
+    const $ = (id) => {
+        let el = domCache.get(id);
+        if (!el) domCache.set(id, el = document.getElementById(id));
+        return el;
+    };
+    const on = (ids, type, fn) => [].concat(ids).forEach(id => $(id).addEventListener(type, fn));
     const count = (el) => Math.max(0, parseInt(el.value, 10) || 0);
 
     // ---------------------------------------------------------
@@ -168,7 +174,7 @@
         $('gun-reward-display').textContent = reward;
         $('gun-copy-text').value =
             `시민측 참여인원(고번/이름): ${$('gun-citizen').value}\n` +
-            `백사회측 참여인원(고번/이름): ${$('gun-enemy').value}\n` +
+            `신수측 참여인원(고번/이름): ${$('gun-enemy').value}\n` +
             `라운드 승/패 여부(큰스): ${roundsStr || '미입력'}\n` +
             `벌금: ${formatMoney(fine)}\n` +
             `보상: ${reward}`;
@@ -185,12 +191,12 @@
     const init = () => {
         $('rp-target-select').append(...TARGET_ORGS.map(o => new Option(o, o)));
 
-        ['rp-target-select', 'rp-type'].forEach(id => $(id).addEventListener('change', updateRpLedger));
-        ['rp-ally', 'rp-enemy', 'rp-around', 'rp-bround'].forEach(id => $(id).addEventListener('input', updateRpLedger));
-        ['gun-citizen', 'gun-enemy'].forEach(id => $(id).addEventListener('input', updateGunLedger));
+        on(['rp-target-select', 'rp-type'], 'change', updateRpLedger);
+        on(['rp-ally', 'rp-enemy', 'rp-around', 'rp-bround'], 'input', updateRpLedger);
+        on(['gun-citizen', 'gun-enemy'], 'input', updateGunLedger);
 
         // 이미지: 파일 선택 / Ctrl+V / 드래그&드롭
-        $('rp-screenshot-input').addEventListener('change', (e) => {
+        on('rp-screenshot-input', 'change', (e) => {
             Array.from(e.target.files).forEach(addImage);
             e.target.value = '';
         });
@@ -212,20 +218,22 @@
         });
 
         // 건샵털이 버튼
-        $('btn-add-win').addEventListener('click', () => changeRounds(() => gunRounds.length < MAX_GUN_ROUNDS && gunRounds.push('승')));
-        $('btn-add-lose').addEventListener('click', () => changeRounds(() => gunRounds.length < MAX_GUN_ROUNDS && gunRounds.push('패')));
-        $('btn-remove-round').addEventListener('click', () => changeRounds(() => gunRounds.pop()));
-        $('btn-reset-round').addEventListener('click', () => changeRounds(() => { gunRounds = []; }));
+        const addRound = (result) => () => changeRounds(() => gunRounds.length < MAX_GUN_ROUNDS && gunRounds.push(result));
+        on('btn-add-win', 'click', addRound('승'));
+        on('btn-add-lose', 'click', addRound('패'));
+        on('btn-remove-round', 'click', () => changeRounds(() => gunRounds.pop()));
+        on('btn-reset-round', 'click', () => changeRounds(() => { gunRounds = []; }));
 
         // 복사 버튼
-        $('btn-copy-rp-text').addEventListener('click', () => { updateRpLedger(); copyFrom('rp-copy-text', '장부 텍스트가 복사되었습니다! 붙여넣은 뒤 ② 스크린샷 복사를 눌러주세요.'); });
-        $('btn-copy-rp-image').addEventListener('click', copyRpImage);
-        $('btn-copy-gun').addEventListener('click', () => copyFrom('gun-copy-text', '건샵털이 장부가 복사되었습니다!'));
+        on('btn-copy-rp-text', 'click', () => { updateRpLedger(); copyFrom('rp-copy-text', '장부 텍스트가 복사되었습니다! 붙여넣은 뒤 ② 스크린샷 복사를 눌러주세요.'); });
+        on('btn-copy-rp-image', 'click', copyRpImage);
+        on('btn-copy-gun', 'click', () => copyFrom('gun-copy-text', '건샵털이 장부가 복사되었습니다!'));
 
         renderWeaponSelects();
         updateRpLedger();
         updateGunLedger();
     };
 
+    window.addEventListener('pagehide', () => images.forEach(i => URL.revokeObjectURL(i.url)));
     document.addEventListener('DOMContentLoaded', init);
 })();

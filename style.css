@@ -11,12 +11,8 @@
     --warning: #f59e0b;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Pretendard', -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+button, input, select, textarea { font-family: inherit; }
 
 /* ===== 숫자 input spin 버튼 숨김 ===== */
 input[type=number]::-webkit-inner-spin-button,
@@ -24,6 +20,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 input[type=number] { -moz-appearance: textfield; }
 
 body {
+    font-family: 'Pretendard', -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-main);
     min-height: 100vh;
@@ -35,16 +32,15 @@ body {
 .orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(100px);
     z-index: -1;
     pointer-events: none;
     will-change: transform;
     animation: float 10s ease-in-out infinite alternate;
 }
 
-.orb-1 { width: 400px; height: 400px; background: rgba(59, 130, 246, 0.25); top: -100px; left: -100px; }
-.orb-2 { width: 300px; height: 300px; background: rgba(139, 92, 246, 0.25); bottom: 20%; right: -50px; animation-delay: -3s; }
-.orb-3 { width: 250px; height: 250px; background: rgba(236, 72, 153, 0.15); top: 40%; left: 20%; animation-delay: -7s; }
+.orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 70%); top: -200px; left: -200px; }
+.orb-2 { width: 450px; height: 450px; background: radial-gradient(circle, rgba(139, 92, 246, 0.25), transparent 70%); bottom: calc(20% - 75px); right: -125px; animation-delay: -3s; }
+.orb-3 { width: 375px; height: 375px; background: radial-gradient(circle, rgba(236, 72, 153, 0.15), transparent 70%); top: calc(40% - 62px); left: calc(20% - 62px); animation-delay: -7s; }
 
 @keyframes float {
     0%   { transform: translate(0, 0) scale(1); }
@@ -94,9 +90,7 @@ h1 {
     z-index: 50;
     margin-top: -1rem;
     padding: 0.75rem 1rem;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(15, 23, 42, 0.95);
     border: 1px solid var(--glass-border);
     border-radius: 16px;
     gap: 0.75rem 1rem;
@@ -163,8 +157,6 @@ h1 {
 /* ===== 카드 ===== */
 .card {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
     padding: 1.75rem;
@@ -284,23 +276,6 @@ details[open] > summary::after { transform: rotate(90deg); }
 .details-content { padding: 1.75rem; padding-top: 0; }
 
 /* ===== 정산 카드 ===== */
-.summary-card { margin-top: 0; }
-
-.summary-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--glass-border);
-    padding-bottom: 1rem;
-    margin-bottom: 1.25rem;
-}
-
-.summary-header h2 {
-    margin-bottom: 0;
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
 .reset-btn {
     background: rgba(100, 116, 139, 0.2);
     border: 1px solid rgba(100, 116, 139, 0.35);
@@ -363,8 +338,6 @@ details[open] > summary::after { transform: rotate(90deg); }
     text-align: right;
 }
 
-.total-value.black-money { color: var(--warning); font-size: 1.25rem; }
-
 /* ===== 텍스트에어리어 / 복사 ===== */
 .copy-box { display: flex; flex-direction: column; gap: 0.75rem; }
 
@@ -376,7 +349,6 @@ details[open] > summary::after { transform: rotate(90deg); }
     border-radius: 10px;
     color: #a78bfa;
     font-size: 0.95rem;
-    font-family: inherit;
     font-weight: 600;
     line-height: 1.6;
     resize: none;
@@ -410,23 +382,6 @@ details[open] > summary::after { transform: rotate(90deg); }
     border-radius: 16px;
 }
 
-.black-money-calculator input {
-    width: 100%;
-    padding: 0.85rem 1rem;
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    color: white;
-    font-size: 1rem;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-    outline: none;
-    transition: border-color 0.2s;
-    font-family: inherit;
-}
-
-.black-money-calculator input:focus { border-color: rgba(59, 130, 246, 0.5); }
-
 .bm-result {
     display: flex;
     justify-content: space-between;
@@ -451,7 +406,6 @@ details[open] > summary::after { transform: rotate(90deg); }
     border: 1px solid var(--glass-border);
     border-radius: 10px;
     color: var(--text-muted);
-    font-family: inherit;
     font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
@@ -463,7 +417,14 @@ details[open] > summary::after { transform: rotate(90deg); }
     border-color: rgba(59, 130, 246, 0.55);
     color: var(--text-main);
 }
-.black-money-calculator[hidden] { display: none; }
+.exch-note { font-size: 0.95rem; margin-bottom: 0.75rem; }
+.exch-label-row { display: flex; justify-content: space-between; align-items: flex-end; }
+.exch-label { font-size: 0.95rem; font-weight: 500; }
+.exch-korean { color: var(--accent); font-size: 0.9rem; font-weight: 600; }
+.exch-fee-label { color: var(--danger); }
+.exch-receive { width: 100%; display: flex; justify-content: space-between; color: var(--success); font-size: 1.15rem; }
+.exch-raw { font-size: 0.85rem; margin-top: 0.25rem; }
+.extra-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 
 /* ===== 폼 공통 ===== */
 .penalty-calculator { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -471,29 +432,27 @@ details[open] > summary::after { transform: rotate(90deg); }
 .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
 .form-group label { font-size: 0.95rem; font-weight: 600; }
 
-.styled-select, .styled-input {
+.black-money-calculator input, .styled-select, .styled-input {
     width: 100%;
     padding: 0.85rem 1rem;
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid var(--glass-border);
     border-radius: 10px;
-    color: white;
+    color: #fff;
     font-size: 1rem;
     outline: none;
-    font-family: inherit;
     transition: border-color 0.2s;
 }
-
-.styled-select:focus, .styled-input:focus { border-color: rgba(59, 130, 246, 0.5); }
-.styled-select option { background: #1e293b; color: #fff; }
+.black-money-calculator input { margin: 0.5rem 0 1rem; }
+.black-money-calculator input:focus, .styled-select:focus, .styled-input:focus { border-color: rgba(59, 130, 246, 0.5); }
+.styled-select option, .styled-select-sm option { background: #1e293b; color: #fff; }
 .styled-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .styled-select-sm {
     padding: 0.4rem 0.6rem; font-size: 0.85rem; border-radius: 6px;
     background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #fff; outline: none; cursor: pointer; min-width: 110px; font-family: inherit;
+    color: #fff; outline: none; cursor: pointer; min-width: 110px;
 }
-.styled-select-sm option { background: #1e293b; color: #fff; }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
@@ -544,6 +503,7 @@ details[open] > summary::after { transform: rotate(90deg); }
 .copy-row .copy-btn { flex: 1; }
 .gun-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .gun-actions .copy-btn { padding: 0.9rem 0.8rem; }
+.gun-actions .win, .gun-actions .lose { flex: 1; }
 .copy-btn.win  { background: #10b981; }
 .copy-btn.lose { background: #ef4444; }
 .copy-btn.gray { background: #64748b; }
@@ -572,22 +532,17 @@ details[open] > summary::after { transform: rotate(90deg); }
     border-top: 1px solid var(--glass-border);
 }
 
-/* 무기카드 복사버튼 */
-/* .card h2의 margin/border/padding을 wrapper가 대신 담당, h2 자체에서는 제거 */
-.card-weapon-header {
+/* 카드 상단 헤더(제목 + 버튼): .card h2 의 여백/구분선을 wrapper가 대신 담당 */
+.summary-header, .card-weapon-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--glass-border);
     padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
-
-.card.card-weapon .card-weapon-header h2 {
-    margin-bottom: 0 !important;
-    border-bottom: none !important;
-    padding-bottom: 0 !important;
-}
+.summary-header { margin-bottom: 1.25rem; }
+.summary-header h2, .card-weapon-header h2 { margin: 0; border: 0; padding: 0; }
 
 .copy-btn-sm {
     background: rgba(59, 130, 246, 0.18);
@@ -618,7 +573,11 @@ details[open] > summary::after { transform: rotate(90deg); }
 .muted { color: var(--text-muted); }
 .v-blue { color: #60a5fa; font-weight: 700; }
 .v-purple { color: #a78bfa; font-weight: 700; }
-.v-warn { color: var(--warning); font-weight: 800; }
+.v-warn { color: var(--warning); font-weight: 800; font-size: 1.1rem; }
+.v-warn.total { font-size: 1.3rem; }
+.v-danger  { color: var(--danger); font-weight: 700; }
+.v-success { color: var(--success); font-weight: 700; }
+.round-status { font-size: 0.95rem; }
 .full-width { grid-column: 1 / -1; }
 
 /* ===== 반응형 ===== */
@@ -640,7 +599,6 @@ details[open] > summary::after { transform: rotate(90deg); }
     .card { padding: 1.25rem; }
     .total-label { font-size: 1rem; }
     .total-value { font-size: 1.4rem; }
-    .total-value.black-money { font-size: 1rem; }
     .gun-actions { flex-wrap: wrap; }
     .input-group button { width: 40px; height: 40px; }
     .input-group input { width: 52px; height: 40px; font-size: 1rem; }
