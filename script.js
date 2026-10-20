@@ -41,6 +41,7 @@
     const byId = new Map(items.map(i => [i.id, i]));
     const qty = Object.fromEntries(items.map(i => [i.id, 0]));
     const bm = { input: 0, receive: 0 };   // 검은돈: 입력 원금 / 실수령액
+    const box = { count: 0, receive: 0 };  // 밀수품 상자: 개수 / 실수령액
 
     // render() 이후 한 번만 조회해서 재사용하는 DOM 참조
     const ui = { qtyInputs: new Map(), counts: new Map() };
@@ -136,21 +137,20 @@
     };
 
     // ---- 합계 / 정산 갱신 ----
-    const buildSettleHTML = (receive, total) => {
+    // ( 검은돈 + 밀수품 ) − 물품 = 남은/부족 금액
+    const buildSettleHTML = (total) => {
+        const receive = bm.receive + box.receive;
         const diff = Math.abs(receive - total);
         const isRemain = receive >= total;
+        const label = (t) => `<span class="header-total-label">${t}</span>`;
+        const num = (n) => `<span class="settle-num">${formatMoney(n)}</span>`;
+        const op = (t) => `<span class="settle-op">${t}</span>`;
         return {
-            isRemain,
-            html:
-                `<span class="header-total-label">검은돈(${BM_RECEIVE_PCT}%)</span>` +
-                `<span class="settle-num">${formatMoney(receive)}</span>` +
-                `<span class="settle-op">−</span>` +
-                `<span class="header-total-label">물품</span>` +
-                `<span class="settle-num">${formatMoney(total)}</span>` +
-                `<span class="settle-op">=</span>` +
-                `<span class="header-total-label">${isRemain ? '남은 금액' : '부족한 금액'}</span>` +
-                `<span class="settle-result">${formatMoney(diff)}</span>`,
-            diff
+            receive, isRemain, diff,
+            html: `${op('(')}${label(`검은돈(${BM_RECEIVE_PCT}%)`)}${num(bm.receive)}${op('+')}` +
+                  `${label(`밀수품(${BOX_RECEIVE_PCT}%)`)}${num(box.receive)}${op(')')}` +
+                  `${op('−')}${label('물품')}${num(total)}${op('=')}` +
+                  `${label(isRemain ? '남은 금액' : '부족한 금액')}<span class="settle-result">${formatMoney(diff)}</span>`
         };
     };
 
@@ -170,12 +170,12 @@
         ui.grandTotal.textContent = totalText;
         ui.headerTotal.textContent = totalText;
 
-        const hasBm = bm.input > 0;
-        const settle = hasBm ? buildSettleHTML(bm.receive, total) : null;
+        const hasExchange = bm.input > 0 || box.count > 0;
+        const settle = hasExchange ? buildSettleHTML(total) : null;
 
-        // 헤더: 검은돈 실수령액 − 물품 총합계
-        ui.headerSettle.hidden = !hasBm;
-        if (hasBm) {
+        // 헤더: (검은돈 + 밀수품) − 물품 총합계
+        ui.headerSettle.hidden = !hasExchange;
+        if (hasExchange) {
             ui.headerSettle.classList.toggle('short', !settle.isRemain);
             ui.headerSettle.innerHTML = settle.html;
         } else {
@@ -189,14 +189,19 @@
                 `- ${item.name} x ${count}${unitSuffix(item, count)} : ${formatMoney(subtotal)}`);
             sections.push(['[ 물품 구매 내역 ]', ...lines, '', `총합계: ${totalText}`].join('\n'));
         }
-        if (hasBm) {
-            sections.push([
-                '[ 검은돈 정산 ]',
-                `검은돈 입력 금액: ${formatMoney(bm.input)}`,
-                `환전 후 금액 (${BM_RECEIVE_PCT}%): ${formatMoney(bm.receive)}`,
-                `물품 총합계: -${totalText}`,
-                `${settle.isRemain ? '남은 검은돈 실수령액' : '부족한 금액'}: ${formatMoney(settle.diff)}`
-            ].join('\n'));
+        if (hasExchange) {
+            const lines = ['[ 환전 정산 ]'];
+            if (bm.input > 0) {
+                lines.push(`검은돈 입력 금액: ${formatMoney(bm.input)}`,
+                           `검은돈 환전 후 금액 (${BM_RECEIVE_PCT}%): ${formatMoney(bm.receive)}`);
+            }
+            if (box.count > 0) {
+                lines.push(`밀수품 상자 ${formatNumber(box.count)}개 환전 후 금액 (${BOX_RECEIVE_PCT}%): ${formatMoney(box.receive)}`);
+            }
+            if (bm.input > 0 && box.count > 0) lines.push(`환전 합계: ${formatMoney(settle.receive)}`);
+            lines.push(`물품 총합계: -${totalText}`,
+                       `${settle.isRemain ? '남은 실수령액' : '부족한 금액'}: ${formatMoney(settle.diff)}`);
+            sections.push(lines.join('\n'));
         }
 
         ui.summaryList.innerHTML = selected.length
@@ -262,6 +267,8 @@
 
     const refreshBox = (count) => {
         const receive = count * BOX_RECEIVE;
+        box.count = count;
+        box.receive = receive;
         showExchange('box', { headline: `${formatNumber(count)}개`, fee: count * BOX_PRICE - receive, receive });
     };
 
@@ -322,6 +329,7 @@
                 updateTotals();
             } else if (t.id === 'box-input') {
                 refreshBox(formatDigitsInput(t, MAX_BOX_DIGITS));
+                updateTotals();
             } else if (t.dataset.id) {
                 setQty(t.dataset.id, t.value, false);
             }
