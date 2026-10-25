@@ -9,7 +9,7 @@
     const WEAPONS = ['미니 SMG', '카빈', '어썰트', '샷건', '우지', '피스톨', '근접무기'];
     const ENEMY_BASED = new Set(['카게', '밀게', '건게','말농','남부공항','호수위']); // 적군 인원 기준 게릴라
     const FEE_PER_PERSON = 30_000_000;  // RP: 1라운드 인당 3천만
-    const GUN_FINE = 50_000_000;        // 건샵털이: 신수 승리 라운드당 5천만
+    const GUN_FINE = 50_000_000;        // 건샵털이:  승리 라운드당 5천만
     const MAX_GUN_ROUNDS = 3;
     const MAX_IMAGES = 10;
     // =========================================================
@@ -174,7 +174,7 @@
         $('gun-reward-display').textContent = reward;
         $('gun-copy-text').value =
             `시민측 참여인원(고번/이름): ${$('gun-citizen').value}\n` +
-            `신수측 참여인원(고번/이름): ${$('gun-enemy').value}\n` +
+            `구사회측 참여인원(고번/이름): ${$('gun-enemy').value}\n` +
             `라운드 승/패 여부(큰스): ${roundsStr || '미입력'}\n` +
             `벌금: ${formatMoney(fine)}\n` +
             `보상: ${reward}`;
