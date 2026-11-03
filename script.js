@@ -320,7 +320,7 @@
             const rawBtn = e.target.closest('.raw-copy-badge');
             if (rawBtn) {
                 const val = rawBtn.dataset.raw;
-                copyText(val).then(ok => toast(ok ? `숫자(${val})가 복사되었습니다!` : '복사에 실패했습니다.'));
+                copyText(val).then(ok => toast(ok ? `${val} 복사되었습니다!` : '복사에 실패했습니다.'));
                 return;
             }
 
