@@ -22,15 +22,27 @@
     <div class="orb orb-3"></div>
 
     <header class="header-container has-total">
-        <div class="header-title">
-            <h1>🧮 조직 물품 계산기</h1>
-            <div class="header-total" role="status" aria-live="polite">
+        <!-- 1행: 타이틀 & 독립된 조직장부작성 버튼 -->
+        <div class="header-top-row">
+            <h1 class="header-main-title">🧮 조직물품계산기</h1>
+            <a href="ledger.html" class="nav-btn">📖 조직장부작성</a>
+        </div>
+
+        <!-- 2행: 실시간 금액 배지 (총합계 & 마약판매금 30%) -->
+        <div class="header-badges-row">
+            <div class="header-total-group" role="status" aria-live="polite">
                 <span class="header-total-label">총합계</span>
                 <span id="header-total" class="header-total-value">0원</span>
             </div>
-            <div id="header-settle" class="header-total header-settle" role="status" aria-live="polite" hidden></div>
+            <div class="header-drug-30" role="status" aria-live="polite">
+                <span class="header-total-label">마약판매금 30%</span>
+                <span id="header-drug-30-val" class="header-drug-val">0원</span>
+                <span id="header-drug-30-badge-wrap"></span>
+            </div>
         </div>
-        <a href="ledger.html" class="nav-btn">📖 조직 장부 작성</a>
+
+        <!-- 3행: 조건부 정산 결과 박스 (환전 입력 시 표시) -->
+        <div id="header-settle" class="header-total header-settle" role="status" aria-live="polite" hidden></div>
     </header>
 
     <main class="container">
@@ -57,7 +69,6 @@
                 <div class="copy-box">
                     <textarea id="copy-text" class="styled-textarea" rows="4" readonly
                         placeholder="선택한 물품 내역이 이곳에 표시됩니다."></textarea>
-                    <button type="button" id="btn-copy-result" class="copy-btn-sm">📋 내역 복사하기</button>
                 </div>
             </div>
         </div>
