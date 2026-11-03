@@ -2,13 +2,7 @@
     'use strict';
 
     // common.js (index.html <head>에서 먼저 로드됨)
-    const { formatNumber, toast, copyText } = window.Util;
-
-    // 쉼표가 포함된 일반 화폐 형식으로 변환 (예: 100,000,000원)
-    const formatMoneyComma = (amount) => {
-        const n = Math.max(0, Math.round(Number(amount) || 0));
-        return formatNumber(n) + '원';
-    };
+    const { formatMoney, formatNumber, toast, copyText } = window.Util;
 
     // =========================================================
     // ⚙ 설정값
@@ -23,8 +17,8 @@
     const BOX_RECEIVE = BOX_PRICE * BOX_RECEIVE_PCT / 100; // 개당 실수령액
 
     const items = [
-        { id: 'raw', name: '마약 원재료 (세트)', price: 100_000_000, category: 'drug_sales', unit: { per: 100, label: '개' } },
-        { id: 'finished', name: '마약 완제품 (세트)', price: 200_000_000, category: 'drug_sales', unit: { per: 100, label: '개' } },
+        { id: 'raw', name: '마약 원재료 (세트)', price: 100_000_000, category: 'drug', unit: { per: 100, label: '개' } },
+        { id: 'finished', name: '마약 완제품 (세트)', price: 200_000_000, category: 'drug', unit: { per: 100, label: '개' } },
         { id: 'c4', name: 'C4', price: 40_000_000, category: 'drug' },
         { id: 'mini_smg', name: '미니 SMG', price: 130_000_000, category: 'weapon' },
         { id: 'carbine', name: '카빈', price: 130_000_000, category: 'weapon' },
@@ -47,18 +41,19 @@
     const byId = new Map(items.map(i => [i.id, i]));
     const qty = Object.fromEntries(items.map(i => [i.id, 0]));
     const bm = { input: 0, receive: 0 };   // 검은돈: 입력 원금 / 실수령액
-    const box = { count: 0, receive: 0 };  // 밀수품 상자: 개수 / 실수령액
 
+    // render() 이후 한 번만 조회해서 재사용하는 DOM 참조
     const ui = { qtyInputs: new Map(), counts: new Map() };
 
-    const withRaw = (n) => `${formatMoneyComma(n)} (${formatNumber(n)})`;
+    const withRaw = (n) => `${formatMoney(n)} (${formatNumber(n)})`;
     const EMPTY_SUMMARY = '<p class="empty-msg">선택된 물품이 없습니다.</p>';
 
+    // ---- 렌더링 ----
     const renderItem = ({ id, name, price, unit }) => `
         <div class="item-row">
             <div class="item-info">
                 <span class="item-name">${name}${unit ? `<span class="item-count" data-count="${id}"></span>` : ''}</span>
-                <span class="item-price">${formatMoneyComma(price)}</span>
+                <span class="item-price">${formatMoney(price)}</span>
             </div>
             <div class="input-group">
                 <button type="button" data-action="dec" data-id="${id}" aria-label="${name} 감소">−</button>
@@ -88,13 +83,13 @@
 
     const render = () => {
         const app = $('items-container');
-        const list = (cat) => items.filter(i => i.category === cat || (cat === 'drug' && (i.category === 'drug' || i.category === 'drug_sales'))).map(renderItem).join('');
+        const list = (cat) => items.filter(i => i.category === cat).map(renderItem).join('');
         const bmFeePct = 100 - BM_RECEIVE_PCT;
         const boxFeePct = 100 - BOX_RECEIVE_PCT;
 
         app.innerHTML = `
             <div class="card card-drug"><h2>💊 마약 및 폭발물</h2>${list('drug')}</div>
-            <div class="card card-weapon"><div class="card-weapon-header"><h2>🔫 무기 및 총알</h2></div>${list('weapon')}</div>
+            <div class="card card-weapon"><div class="card-weapon-header"><h2>🔫 무기 및 총알</h2><button type="button" id="btn-copy-weapon" class="copy-btn-sm">📋 내역 복사</button></div>${list('weapon')}</div>
             <div class="card card-calc">
                 <h2>💰 환전 수수료 계산기</h2>
                 <div class="exchange-tabs" role="tablist">
@@ -113,7 +108,7 @@
                 ${renderExchangePanel({
                     panel: 'box',
                     hidden: true,
-                    note: `개당 ${formatMoneyComma(BOX_PRICE)} 에서 ${boxFeePct}% 차감 → 개당 ${formatMoneyComma(BOX_RECEIVE)}`,
+                    note: `개당 ${formatMoney(BOX_PRICE)} 에서 ${boxFeePct}% 차감 → 개당 ${formatMoney(BOX_RECEIVE)}`,
                     label: '밀수품 상자 개수 입력',
                     inputId: 'box-input',
                     placeholder: '상자 개수를 입력하세요 (예: 10)',
@@ -128,104 +123,86 @@
                 </div>
             </details>`;
 
+        // DOM 참조 캐싱 (이후 조회 없이 Map/객체로 접근)
         app.querySelectorAll('input[data-id]').forEach(el => ui.qtyInputs.set(el.dataset.id, el));
         app.querySelectorAll('[data-count]').forEach(el => ui.counts.set(el.dataset.count, el));
         ui.tabs = app.querySelectorAll('.exchange-tab');
         ui.panels = app.querySelectorAll('[data-panel]');
         ui.grandTotal = $('grand-total');
         ui.headerTotal = $('header-total');
-        ui.headerDrug30 = $('header-drug-30-val');
-        ui.headerDrug30BadgeWrap = $('header-drug-30-badge-wrap');
         ui.headerSettle = $('header-settle');
         ui.summaryList = $('summary-list');
         ui.copyText = $('copy-text');
     };
 
-    const buildSettleHTML = (total) => {
-        const receive = bm.receive + box.receive;
+    // ---- 합계 / 정산 갱신 ----
+    const buildSettleHTML = (receive, total) => {
         const diff = Math.abs(receive - total);
         const isRemain = receive >= total;
-        const label = (t) => `<span class="header-total-label">${t}</span>`;
-        const rawNumStr = String(diff);
-        const icon = isRemain ? '💵' : '⚠️';
-        const badgeClass = isRemain ? 'raw-copy-badge' : 'raw-copy-badge red';
-        
         return {
-            receive, isRemain, diff,
-            html: `<span class="settle-badge-icon" style="margin-right: 4px;">${icon}</span>` +
-                  `${label(isRemain ? '손님에게 드릴 돈' : '부족한 금액')}` +
-                  `<span class="header-settle-val">${formatMoneyComma(diff)}</span>` +
-                  ` <button type="button" class="${badgeClass}" data-raw="${rawNumStr}" title="클릭하여 숫자 복사">${rawNumStr}</button>`
+            isRemain,
+            html:
+                `<span class="header-total-label">검은돈(${BM_RECEIVE_PCT}%)</span>` +
+                `<span class="settle-num">${formatMoney(receive)}</span>` +
+                `<span class="settle-op">−</span>` +
+                `<span class="header-total-label">물품</span>` +
+                `<span class="settle-num">${formatMoney(total)}</span>` +
+                `<span class="settle-op">=</span>` +
+                `<span class="header-total-label">${isRemain ? '남은 금액' : '부족한 금액'}</span>` +
+                `<span class="settle-result">${formatMoney(diff)}</span>`,
+            diff
         };
     };
 
     const updateTotals = () => {
+        // 한 번의 순회로 합계와 선택 목록 생성
         let total = 0;
-        let drugSalesTotal = 0;
         const selected = [];
         for (const item of items) {
             const count = qty[item.id];
             if (!count) continue;
             const subtotal = item.price * count;
             total += subtotal;
-            if (item.category === 'drug_sales') {
-                drugSalesTotal += subtotal;
-            }
             selected.push({ item, count, subtotal });
         }
 
-        const totalText = formatMoneyComma(total);
+        const totalText = formatMoney(total);
         ui.grandTotal.textContent = totalText;
         ui.headerTotal.textContent = totalText;
 
-        // 마약 원재료 및 완제품 가격 총합 기준 30% 계산
-        const drugSales30Val = Math.round(drugSalesTotal * 0.3);
-        if (ui.headerDrug30) {
-            ui.headerDrug30.textContent = formatMoneyComma(drugSales30Val);
-        }
-        if (ui.headerDrug30BadgeWrap) {
-            ui.headerDrug30BadgeWrap.innerHTML = drugSales30Val > 0 
-                ? `<button type="button" class="raw-copy-badge blue" data-raw="${drugSales30Val}" title="클릭하여 숫자 복사">${drugSales30Val}</button>`
-                : '';
-        }
+        const hasBm = bm.input > 0;
+        const settle = hasBm ? buildSettleHTML(bm.receive, total) : null;
 
-        // 검은돈 또는 밀수품 상자에 실제 값이 입력되었을 때만 초록색 상자 표시
-        const hasExchangeInput = bm.input > 0 || box.count > 0;
-        const settle = hasExchangeInput ? buildSettleHTML(total) : null;
-
-        ui.headerSettle.hidden = !hasExchangeInput;
-        if (hasExchangeInput) {
+        // 헤더: 검은돈 실수령액 − 물품 총합계
+        ui.headerSettle.hidden = !hasBm;
+        if (hasBm) {
             ui.headerSettle.classList.toggle('short', !settle.isRemain);
             ui.headerSettle.innerHTML = settle.html;
         } else {
             ui.headerSettle.innerHTML = '';
         }
 
+        // 하단 정산 카드 + 복사 텍스트
         const sections = [];
         if (selected.length) {
             const lines = selected.map(({ item, count, subtotal }) =>
-                `- ${item.name} x ${count}${unitSuffix(item, count)} : ${formatMoneyComma(subtotal)}`);
-            sections.push(['[ 물품 구매 내역 ]', ...lines, '', `총합계: ${totalText}`, `마약판매금 30%: ${formatMoneyComma(drugSales30Val)}`].join('\n'));
+                `- ${item.name} x ${count}${unitSuffix(item, count)} : ${formatMoney(subtotal)}`);
+            sections.push(['[ 물품 구매 내역 ]', ...lines, '', `총합계: ${totalText}`].join('\n'));
         }
-        if (hasExchangeInput) {
-            const lines = ['[ 환전 정산 ]'];
-            if (bm.input > 0) {
-                lines.push(`검은돈 입력 금액: ${formatMoneyComma(bm.input)}`,
-                           `검은돈 환전 후 금액 (${BM_RECEIVE_PCT}%): ${formatMoneyComma(bm.receive)}`);
-            }
-            if (box.count > 0) {
-                lines.push(`밀수품 상자 ${formatNumber(box.count)}개 환전 후 금액 (${BOX_RECEIVE_PCT}%): ${formatMoneyComma(box.receive)}`);
-            }
-            if (bm.input > 0 && box.count > 0) lines.push(`환전 합계: ${formatMoneyComma(settle.receive)}`);
-            lines.push(`물품 총합계: -${totalText}`,
-                       `${settle.isRemain ? '손님에게 드릴 돈' : '부족한 금액'}: ${formatMoneyComma(settle.diff)} (${settle.diff})`);
-            sections.push(lines.join('\n'));
+        if (hasBm) {
+            sections.push([
+                '[ 검은돈 정산 ]',
+                `검은돈 입력 금액: ${formatMoney(bm.input)}`,
+                `환전 후 금액 (${BM_RECEIVE_PCT}%): ${formatMoney(bm.receive)}`,
+                `물품 총합계: -${totalText}`,
+                `${settle.isRemain ? '남은 검은돈 실수령액' : '부족한 금액'}: ${formatMoney(settle.diff)}`
+            ].join('\n'));
         }
 
         ui.summaryList.innerHTML = selected.length
             ? selected.map(({ item, count, subtotal }) => `<div class="summary-row">
                     <span>${item.name} x ${count}${unitSuffix(item, count)}</span>
-                    <span class="summary-price">${formatMoneyComma(subtotal)}</span>
+                    <span class="summary-price">${formatMoney(subtotal)}</span>
                 </div>`).join('')
             : EMPTY_SUMMARY;
         ui.copyText.value = sections.join('\n\n');
@@ -234,6 +211,8 @@
     const unitSuffix = ({ unit }, count) =>
         unit ? ` (${formatNumber(count * unit.per)}${unit.label})` : '';
 
+    // ---- 수량 ----
+    // 값/화면만 갱신 (합계 갱신은 호출 측에서 한 번만)
     const applyQty = (id, value, syncInput = true) => {
         const v = Math.min(MAX_QTY, Math.max(0, parseInt(value, 10) || 0));
         qty[id] = v;
@@ -247,6 +226,8 @@
         updateTotals();
     };
 
+    // ---- 환전 계산기 ----
+    // 숫자만 추출해 쉼표 포맷 + 커서 위치 유지, 숫자 값 반환
     const formatDigitsInput = (input, maxDigits) => {
         const caret = input.selectionStart ?? input.value.length;
         const digitsBeforeCaret = input.value.slice(0, caret).replace(/\D/g, '').length;
@@ -264,6 +245,7 @@
         return amount;
     };
 
+    // 결과 표시를 한 곳에서 처리 (초기 화면/초기화/입력 모두 동일한 형식)
     const showExchange = (panel, { headline, fee, receive }) => {
         $(`${panel}-input-korean`).textContent = `(${headline})`;
         $(`${panel}-fee`).textContent = withRaw(fee);
@@ -275,13 +257,11 @@
         const receive = Math.floor(amount * BM_RECEIVE_PCT / 100);
         bm.input = amount;
         bm.receive = receive;
-        showExchange('bm', { headline: formatMoneyComma(amount), fee: amount - receive, receive });
+        showExchange('bm', { headline: formatMoney(amount), fee: amount - receive, receive });
     };
 
     const refreshBox = (count) => {
         const receive = count * BOX_RECEIVE;
-        box.count = count;
-        box.receive = receive;
         showExchange('box', { headline: `${formatNumber(count)}개`, fee: count * BOX_PRICE - receive, receive });
     };
 
@@ -294,43 +274,47 @@
         ui.panels.forEach(p => { p.hidden = p.dataset.panel !== name; });
     };
 
+    // ---- 전체 초기화 ----
     const resetAll = () => {
         items.forEach(i => applyQty(i.id, 0));
         $('bm-input').value = '';
         $('box-input').value = '';
         refreshBlackMoney(0);
         refreshBox(0);
-        setTab('bm');
+        setTab('bm');   // 초기화 시 항상 검은돈 환전 화면으로
         updateTotals();
         toast('전체 수량이 초기화되었습니다.');
     };
 
+    const copyResult = async () => {
+        const text = ui.copyText.value;
+        if (!text) return toast('복사할 내역이 없습니다.');
+        toast((await copyText(text)) ? '내역이 클립보드에 복사되었습니다!' : '복사에 실패했습니다.');
+    };
+
+    // ---- 초기화 / 이벤트 등록 ----
     const init = () => {
         const app = $('items-container');
         if (!app) return;
 
         render();
-        items.forEach(i => applyQty(i.id, 0));
+        items.forEach(i => applyQty(i.id, 0));   // 단위 표기 "(0개)" 초기화
         refreshBlackMoney(0);
         refreshBox(0);
         setTab('bm');
         updateTotals();
 
-        document.addEventListener('click', (e) => {
-            const rawBtn = e.target.closest('.raw-copy-badge');
-            if (rawBtn) {
-                const val = rawBtn.dataset.raw;
-                copyText(val).then(ok => toast(ok ? `${val} 복사되었습니다!` : '복사에 실패했습니다.'));
-                return;
-            }
-
+        // 클릭 한 곳에서 위임 처리: 탭 / 무기 내역 복사 / 수량 ± 버튼
+        app.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
             if (btn.dataset.tab) return setTab(btn.dataset.tab);
+            if (btn.id === 'btn-copy-weapon') return copyResult();
             const { action, id } = btn.dataset;
             if (action) setQty(id, qty[id] + (action === 'inc' ? 1 : -1));
         });
 
+        // 수량 직접 입력 / 검은돈 / 상자 개수 입력
         app.addEventListener('input', (e) => {
             const t = e.target;
             if (t.id === 'bm-input') {
@@ -338,17 +322,18 @@
                 updateTotals();
             } else if (t.id === 'box-input') {
                 refreshBox(formatDigitsInput(t, MAX_BOX_DIGITS));
-                updateTotals();
             } else if (t.dataset.id) {
                 setQty(t.dataset.id, t.value, false);
             }
         });
 
+        // 포커스 아웃 시 값 정규화
         app.addEventListener('change', (e) => {
             const id = e.target.dataset.id;
             if (id) e.target.value = qty[id];
         });
 
+        // 방향키로 수량 변경
         app.addEventListener('keydown', (e) => {
             const input = e.target.closest('input[data-id]');
             if (!input || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
@@ -358,6 +343,7 @@
         });
 
         $('btn-reset-all')?.addEventListener('click', resetAll);
+        $('btn-copy-result')?.addEventListener('click', copyResult);
     };
 
     document.addEventListener('DOMContentLoaded', init);
